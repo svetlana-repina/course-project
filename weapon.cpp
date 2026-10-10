@@ -4,7 +4,7 @@
 Weapon::Weapon()
     : name("Кулак"), 
     damage(1), 
-    damageType("физический"), 
+    damageType(DamageType::Physical), 
     durability(100), 
     maxDurability(100), 
     bonusCrit(0), 
@@ -13,7 +13,7 @@ Weapon::Weapon()
     std::cout << "Создано оружие по умолчанию: " << name << "\n";
 }
 
-Weapon::Weapon(const std::string& name, int damage, const std::string& damageType, int maxDurability, double bonusCrit, double bonusCritChance)
+Weapon::Weapon(const std::string& name, int damage, DamageType damageType, int maxDurability, double bonusCrit, double bonusCritChance)
     : name(name), 
     damage(damage), 
     damageType(damageType), 
@@ -61,7 +61,7 @@ int Weapon::getDamage() const
     return damage;
 }
 
-std::string Weapon::getDamageType() const 
+DamageType Weapon::getDamageType() const 
 {
     return damageType;
 }
@@ -79,6 +79,16 @@ double Weapon::getBonusCrit() const
 double Weapon::getBonusCritChance() const 
 {
     return bonusCritChance;
+}
+
+std::string Weapon::damageTypeToString() const
+{
+    switch(damageType)
+    {
+        case DamageType::Physical: return "физический";
+        case DamageType::Magical: return "магический";
+    }
+    return "неизвестный";
 }
 
 int Weapon::calculateBaseDamage(int strength) const 
@@ -111,7 +121,10 @@ bool Weapon::isBroken() const
 
 void Weapon::printInfo() const
 {
-    std::cout << "Оружие:    " << name << "\n" 
-              << "Урон:      " << damage << "\n" 
-              << "Прочность: " << durability << " из " << maxDurability << "\n";
+    std::cout << "Оружие:             " << name << "\n" 
+              << "Урон:               " << damage << "\n" 
+              << "Тип урона:          " << damageTypeToString() << "\n"
+              << "Прочность:          " << durability << " из " << maxDurability << "\n" 
+              << "Бонус к крит урону: " << bonusCrit << "\n"
+              << "Бонус к крит шансу: " << bonusCritChance << "\n";
 }

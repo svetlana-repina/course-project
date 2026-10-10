@@ -25,7 +25,7 @@ Character::Character()
 }
 Character::Character(const std::string& name, int maxHealth, int strength, int maxStamina, int maxMana, 
             int agility, int defense, int intelligence, double crit, double critChance, const std::string& weaponName, 
-            int weaponDamage, const std::string& weaponType, int weaponDurability, double weaponBonusCrit, double weaponBonusCritChance)
+            int weaponDamage, DamageType weaponType, int weaponDurability, double weaponBonusCrit, double weaponBonusCritChance)
     : name(name), 
     health(maxHealth), 
     maxHealth(maxHealth), 

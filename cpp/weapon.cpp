@@ -7,8 +7,8 @@ Weapon::Weapon()
     damageType(DamageType::Physical), 
     durability(100), 
     maxDurability(100), 
-    bonusCrit(0), 
-    bonusCritChance(0)
+    bonusCrit(0.0), 
+    bonusCritChance(0.0)
 {
     std::cout << "Создано оружие по умолчанию: " << name << "\n";
 }

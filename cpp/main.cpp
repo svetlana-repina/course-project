@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <windows.h>
 #include "character.hpp"
 #include "battle.hpp"
@@ -23,8 +24,8 @@ int main() {
 
     std::cout << "========= РАБОТА АГРЕГАЦИИ: =========\n";
     std::cout << "Создаём двух персонажей\n";
-    Character* warrior = new Character("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 30, 0.25, 2.5);
-    Character* mage = new Character("Маг", 80, 5, 15, 50, 10, 5, 35, 1.2, 25.0, "Посох", 10, DamageType::Magical, 35, 1.0, 0.5);
+    auto warrior = std::make_shared<Character>("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 30, 0.25, 2.5);
+    auto mage = std::make_shared<Character>("Маг", 80, 5, 15, 50, 10, 5, 35, 1.2, 25.0, "Посох", 10, DamageType::Magical, 35, 1.0, 0.5);
     {
         std::cout << "Создаём бой во вложенном блоке\n";
         Battle battle(warrior, mage);
@@ -111,7 +112,7 @@ int main() {
 
     std::cout << "========= РАБОТА С ОПЕРАТОРАМИ ПО ССЫЛКЕ И ПО УКАЗАТЕЛЮ: =========\n";
     std::cout << "Создадим указатель на объект warrior\n";
-    Character* pointer = warrior;
+    auto pointer = warrior;
     pointer->printState();
 
     std::cout << "Создадим ссылку на тот же объект\n";
@@ -142,26 +143,24 @@ int main() {
 
     std::cout << "========= ДИНАМИЧЕСКИЙ МАССИВ ОБЪЕКТОВ: =========\n";
     std::cout << "Создаём динамический массив из 2 объектов\n";
-    Character* team = new Character[2]
-    {
-        Character("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 100, 0.25, 2.5),
-        Character("Маг", 80, 5, 15, 50, 10, 5, 35, 1.2, 25.0, "Посох", 10, DamageType::Magical, 35, 1.0, 0.5)
-    };
+    auto team = std::make_unique<Character[]>(2);
+    team[0] = Character("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 100, 0.25, 2.5);
+    team[1] = Character("Маг", 80, 5, 15, 50, 10, 5, 35, 1.2, 25.0, "Посох", 10, DamageType::Magical, 35, 1.0, 0.5);
     std::cout << "Содержимое массива:\n";
     for(int i=0; i<2; i++)
     {
         team[i].printState();
     }
     std::cout << "Удаляем массив\n";
-    delete[] team;
+    team.reset();
     std::cout << "Массив удалён\n";
 
 
     std::cout << "========= МАССИВ ДИНАМИЧЕСКИХ ОБЪЕКТОВ: =========\n";
     std::cout << "Создаём массив указателей на 2 персонажей\n";
-    Character* team2[2];
-    team2[0] = new Character("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 100, 0.25, 2.5);
-    team2[1] = new Character("Маг", 80, 5, 15, 50, 10, 5, 35, 1.2, 25.0, "Посох", 10, DamageType::Magical, 35, 1.0, 0.5);
+    std::unique_ptr<Character> team2[2];
+    team2[0] = std::make_unique<Character>("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 100, 0.25, 2.5);
+    team2[1] = std::make_unique<Character>("Маг", 80, 5, 15, 50, 10, 5, 35, 1.2, 25.0, "Посох", 10, DamageType::Magical, 35, 1.0, 0.5);
     for(int i=0; i<2; i++)
     {
         team2[i]->printState();
@@ -169,11 +168,69 @@ int main() {
     std::cout << "Удаляем каждый объект массива\n";
     for(int i = 0; i < 2; i++)
     {
-        delete team2[i];
+        team2[i].reset();
     }
     std::cout << "Все объекты удалены\n";
 
-    std::cout << "Удаляем ненужные объекты\n";
-    delete warrior;
-    delete mage;
+    std::cout << "========= ПЕРЕДАЧА ВЛАДЕНИЯ UNIQUE_PTR: =========\n";
+    {
+        std::cout << "Создаём бой. Владелец: battle\n";
+        auto battle = std::make_unique<Battle>(warrior, mage);
+        std::cout << "Передаём владение боем movedBattle\n";
+        auto movedBattle = std::move(battle);
+        std::cout << "Проверяем исходный указатель\n";
+        if (!battle) 
+        {
+            std::cout << "Исходный указатель пуст\n";
+        }
+        else
+        {
+            std::cout << "Исходный указатель не пуст\n";
+        }
+        std::cout << "Выход из блока\n";
+    }
+
+    std::cout << "========= СЧЁТЧИК ВЛАДЕЛЬЦЕВ SHARED_PTR: =========\n";
+    {
+        std::cout << "Создаём объект через make_shared\n";
+        auto rogue = std::make_shared<Character>("Разбойник", 50, 10, 20, 0, 15, 3, 5, 1.2, 10.0, "Кинжал", 8, DamageType::Physical, 20, 0.0, 0.0);
+        std::cout << "Счётчик владельцев после создания: " << rogue.use_count() << "\n";
+        {
+            std::cout << "Копируем указатель во вложенном блоке\n";
+            auto copy = rogue;
+            std::cout << "Счётчик владельцев после копирования: " << rogue.use_count() << "\n";
+            std::cout << "Выходим из вложенного блока\n";
+        }
+        std::cout << "Счётчик владельцев после выхода из блока: " << rogue.use_count() << "\n";
+        std::cout << "Уничтожаем последнего владельца\n";
+        rogue.reset();
+    }
+
+    std::cout << "========= ДЕМОНСТРАЦИЯ WEAK_PTR: =========\n";
+    std::cout << "Создаём слабую ссылку на warrior\n";
+    std::weak_ptr<Character> watcher = warrior;
+    std::cout << "Проверяем жив ли warrior\n";
+    if (watcher.lock() != nullptr)
+    {
+        std::cout << "Warrior жив\n";
+    }
+    else
+    {
+        std::cout << "Warrior уничтожен\n";
+    }
+    std::cout << "Уничтожаем последнего владельца warrior\n";
+    warrior.reset();
+    std::cout << "Проверяем жив ли warrior\n";
+    if (watcher.lock() != nullptr)
+    {
+        std::cout << "Warrior жив\n";
+    }
+    else
+    {
+        std::cout << "Warrior уничтожен\n";
+    }
+
+    std::cout << "\n\nУдаляем ненужные объекты\n";
+    pointer.reset();
+    mage.reset();
 }

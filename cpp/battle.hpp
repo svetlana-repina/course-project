@@ -1,19 +1,20 @@
 #pragma once
 #include "character.hpp"
+#include <memory>
 
 class Battle
 {
     private:
-        Character* fighter1;
-        Character* fighter2;
+        std::weak_ptr<Character> fighter1;
+        std::weak_ptr<Character> fighter2;
         int turnCount;
 
     public:
         Battle();
-        Battle(Character* f1, Character* f2);
+        Battle(std::shared_ptr<Character> f1, std::shared_ptr<Character> f2);
         ~Battle();
 
-        [[nodiscard]] Character* getWinner() const;
+        [[nodiscard]] std::shared_ptr<Character> getWinner() const;
         [[nodiscard]] bool isFinished() const;
         [[nodiscard]] int getTurnCount() const;
         void performTurn();

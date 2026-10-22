@@ -2,13 +2,11 @@
 #include <iostream>
 
 Battle::Battle()
-    : fighter1(nullptr), 
-    fighter2(nullptr), 
-    turnCount(0)
+    : turnCount(0)
 {
     std::cout << "Создан пустой бой\n";
 }
-Battle::Battle(Character* f1, Character* f2)
+Battle::Battle(std::shared_ptr<Character> f1, std::shared_ptr<Character> f2)
     : fighter1(f1), 
     fighter2(f2), 
     turnCount(0)
@@ -24,9 +22,11 @@ Battle::~Battle()
 {
     std::cout << "Бой завершён и уничтожен\n";
 }
-Character* Battle::getWinner() const
+std::shared_ptr<Character> Battle::getWinner() const
 {
-    if (fighter1 == nullptr || fighter2 == nullptr) 
+    auto f1 = fighter1.lock();
+    auto f2 = fighter2.lock();
+    if (f1 == nullptr || f2 == nullptr) 
     {
         return nullptr;
     }
@@ -34,28 +34,30 @@ Character* Battle::getWinner() const
     {
         return nullptr;
     }
-    bool f1IsAlive = fighter1->isAlive();
-    bool f2IsAlive = fighter2->isAlive();
+    bool f1IsAlive = f1->isAlive();
+    bool f2IsAlive = f2->isAlive();
     if (!f1IsAlive && !f2IsAlive) 
     {
         return nullptr;
     }
     if (f1IsAlive) 
     {
-        return fighter1;
+        return f1;
     }
     else 
     {
-        return fighter2;
+        return f2;
     }
 }
 bool Battle::isFinished() const
 {
-    if (fighter1 == nullptr || fighter2 == nullptr) 
+    auto f1 = fighter1.lock();
+    auto f2 = fighter2.lock();
+    if (f1 == nullptr || f2 == nullptr) 
     {
         return true;
     }
-    return !fighter1->isAlive() || !fighter2->isAlive();
+    return !f1->isAlive() || !f2->isAlive();
 }
 int Battle::getTurnCount() const
 {
@@ -68,15 +70,17 @@ void Battle::performTurn()
         std::cout << "Бой уже завершён\n";
         return;
     }
+    auto f1 = fighter1.lock();
+    auto f2 = fighter2.lock();
     turnCount++;
     std::cout << "-------- Ход " << turnCount << " --------\n";
-    if (turnCount%2 != 0) 
+    if (turnCount % 2 != 0) 
     {
-        fighter1->attack(*fighter2);
+        f1->attack(*f2);
     }
     else 
     {
-        fighter2->attack(*fighter1);
+        f2->attack(*f1);
     }
 }
 void Battle::printWinner() const
@@ -86,7 +90,7 @@ void Battle::printWinner() const
         std::cout << "Бой ещё не закончен\n";
         return;
     }
-    Character* winner = getWinner();
+    auto winner = getWinner();
     if (winner!=nullptr)
     {
         std::cout << winner->getName() << " победил за " << turnCount << " ходов\n";
@@ -98,14 +102,16 @@ void Battle::printWinner() const
 }
 void Battle::printState() const
 {
+    auto f1 = fighter1.lock();
+    auto f2 = fighter2.lock();
     std::cout << "======== Текущее состояние боя (ход " << turnCount << ") ========\n";
-    if (fighter1 != nullptr) 
+    if (f1 != nullptr) 
     {
-        fighter1->printState();
+        f1->printState();
     }
-    if (fighter2 != nullptr) 
+    if (f2 != nullptr) 
     {
-        fighter2->printState();
+        f2->printState();
     }
     std::cout << "===============================================\n";
 }

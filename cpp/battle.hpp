@@ -1,23 +1,23 @@
 #pragma once
-#include "character.hpp"
+#include "base_character.hpp"
 #include <memory>
 
 class Battle
 {
     private:
-        std::weak_ptr<Character> fighter1;
-        std::weak_ptr<Character> fighter2;
+        std::weak_ptr<BaseCharacter> fighter1;
+        std::weak_ptr<BaseCharacter> fighter2;
         int turnCount;
 
     public:
         Battle();
-        Battle(std::shared_ptr<Character> f1, std::shared_ptr<Character> f2);
+        Battle(std::shared_ptr<BaseCharacter> f1, std::shared_ptr<BaseCharacter> f2);
         ~Battle();
 
-        [[nodiscard]] std::shared_ptr<Character> getWinner() const;
+        [[nodiscard]] std::shared_ptr<BaseCharacter> getWinner() const;
         [[nodiscard]] bool isFinished() const;
         [[nodiscard]] int getTurnCount() const;
         void performTurn();
         void printWinner() const;
-        void printState() const;
+        void Describe() const;
 };

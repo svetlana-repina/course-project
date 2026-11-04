@@ -6,7 +6,7 @@ Battle::Battle()
 {
     std::cout << "Создан пустой бой\n";
 }
-Battle::Battle(std::shared_ptr<Character> f1, std::shared_ptr<Character> f2)
+Battle::Battle(std::shared_ptr<BaseCharacter> f1, std::shared_ptr<BaseCharacter> f2)
     : fighter1(f1), 
     fighter2(f2), 
     turnCount(0)
@@ -16,13 +16,13 @@ Battle::Battle(std::shared_ptr<Character> f1, std::shared_ptr<Character> f2)
         std::cout << "Ошибка! Оба участника должны быть заданы.\n";
         return;
     }
-    std::cout << "Начался бой между " << f1->getName() << " и " << f2->getName() << "\n";
+    std::cout << "Начался бой между " << f1->GetName() << " и " << f2->GetName() << "\n";
 }
 Battle::~Battle()
 {
     std::cout << "Бой завершён и уничтожен\n";
 }
-std::shared_ptr<Character> Battle::getWinner() const
+std::shared_ptr<BaseCharacter> Battle::getWinner() const
 {
     auto f1 = fighter1.lock();
     auto f2 = fighter2.lock();
@@ -34,8 +34,8 @@ std::shared_ptr<Character> Battle::getWinner() const
     {
         return nullptr;
     }
-    bool f1IsAlive = f1->isAlive();
-    bool f2IsAlive = f2->isAlive();
+    bool f1IsAlive = f1->IsAlive();
+    bool f2IsAlive = f2->IsAlive();
     if (!f1IsAlive && !f2IsAlive) 
     {
         return nullptr;
@@ -57,7 +57,7 @@ bool Battle::isFinished() const
     {
         return true;
     }
-    return !f1->isAlive() || !f2->isAlive();
+    return !f1->IsAlive() || !f2->IsAlive();
 }
 int Battle::getTurnCount() const
 {
@@ -76,11 +76,11 @@ void Battle::performTurn()
     std::cout << "-------- Ход " << turnCount << " --------\n";
     if (turnCount % 2 != 0) 
     {
-        f1->attack(*f2);
+        f1->Attack(*f2);
     }
     else 
     {
-        f2->attack(*f1);
+        f2->Attack(*f1);
     }
 }
 void Battle::printWinner() const
@@ -93,25 +93,25 @@ void Battle::printWinner() const
     auto winner = getWinner();
     if (winner!=nullptr)
     {
-        std::cout << winner->getName() << " победил за " << turnCount << " ходов\n";
+        std::cout << winner->GetName() << " победил за " << turnCount << " ходов\n";
     }
     else 
     {
         std::cout << "Ничья. Оба бойца умерли\n";
     }
 }
-void Battle::printState() const
+void Battle::Describe() const
 {
     auto f1 = fighter1.lock();
     auto f2 = fighter2.lock();
     std::cout << "======== Текущее состояние боя (ход " << turnCount << ") ========\n";
     if (f1 != nullptr) 
     {
-        f1->printState();
+        std::cout << f1->Describe() << "\n";
     }
     if (f2 != nullptr) 
     {
-        f2->printState();
+        std::cout << f2->Describe() << "\n";
     }
     std::cout << "===============================================\n";
 }

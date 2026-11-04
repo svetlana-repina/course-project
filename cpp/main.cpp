@@ -1,8 +1,13 @@
 #include <iostream>
 #include <memory>
+#include <vector>
+#include <string>
 #include <windows.h>
-#include "character.hpp"
-#include "battle.hpp"
+#include "warrior.hpp"
+#include "mage.hpp"
+#include "priest.hpp"
+#include "rogue.hpp"
+#include "battle_log.hpp"
 
 void setConsoleUTF8() 
 {
@@ -12,225 +17,120 @@ void setConsoleUTF8()
 
 int main() {
     setConsoleUTF8();
+    BattleLog::SetTitle("Турнир");
 
-    std::cout << "========= РАБОТА КОМПОЗИЦИИ: =========\n";
+    std::cout << "========= МАССИВ ИЗ ОБЪЕКТОВ РАЗНЫХ НАСЛЕДНИКОВ: =========\n";
+    std::cout << "Создаём массив указателей из объектов разных наследников\n";
+    auto sword = std::make_shared<Weapon>("Меч", 15, DamageType::Physical, 100, 0.2, 2.5);
+    auto staff1 = std::make_shared<Weapon>("Посох", 12, DamageType::Magical, 100, 0.25, 3.0);
+    auto staff2 = std::make_shared<Weapon>("Посох", 12, DamageType::Magical, 100, 0.25, 3.0);
+    auto dagger = std::make_shared<Weapon>("Кинжал", 7, DamageType::Physical, 100, 0.15, 2.0);
+
+    std::vector<std::unique_ptr<BaseCharacter>> characters;
+    characters.push_back(std::make_unique<Warrior>("Воин", 150, sword, 10));
+    characters.push_back(std::make_unique<Mage>("Маг", 120, staff1, 100));
+    characters.push_back(std::make_unique<Priest>("Жрец", 100, staff2, 75));
+    characters.push_back(std::make_unique<Rogue>("Разбойник", 110, dagger, 5));
+
+    std::cout << "\nАТАКИ:\n";
+    characters[0]->Attack(*characters[1]);
+    characters[1]->Attack(*characters[0]);
+    characters[2]->Attack(*characters[3]);
+    characters[3]->Attack(*characters[2]);
+
+    std::cout << "\nНАВЫКИ:\n";
+    characters[0]->UseSkill(*characters[1]);
+    characters[1]->UseSkill(*characters[0]);
+    characters[2]->UseSkill(*characters[2]);
+    characters[3]->UseSkill(*characters[2]);
+
+    std::cout << "\nПРОПУСК ХОДА:\n";
+    for (auto& hero : characters)
     {
-        std::cout << "Создаём персонажа во вложенном блоке\n";
-        Character hero("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 100, 0.25, 2.5);
-        hero.printState();
+        hero->SkipTurn();
+    }
+
+    std::cout << "\nОПИСАНИЕ:\n";
+    for (auto& hero : characters)
+    {
+        std::cout << hero->Describe() << "\n";
+    }
+
+
+    std::cout << "\n========= УНИЧТОЖЕНИЕ НАСЛЕДНИКА ЧЕРЕЗ УКАЗАТЕЛЬ НА БАЗОВЫЙ КЛАСС: =========\n";
+    {
+        std::cout << "Создаём персонажа через указатель на базовый класс во вложенном блоке\n";
+        std::unique_ptr<BaseCharacter> character = std::make_unique<Priest>("Жрец1", 100, staff2, 75);
         std::cout << "Выходим из вложенного блока\n";
     }
 
 
-    std::cout << "========= РАБОТА АГРЕГАЦИИ: =========\n";
-    std::cout << "Создаём двух персонажей\n";
-    auto warrior = std::make_shared<Character>("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 30, 0.25, 2.5);
-    auto mage = std::make_shared<Character>("Маг", 80, 5, 15, 50, 10, 5, 35, 1.2, 25.0, "Посох", 10, DamageType::Magical, 35, 1.0, 0.5);
+    std::cout << "\n========= ПОВЕРХНОСТНОЕ И ГЛУБОКОЕ КОПИРОВАНИЕ: =========\n";
+    std::cout << "ПОВЕРХНОСТНАЯ КОПИЯ:\n";
+    auto sharedSword = std::make_shared<Weapon>("Общий меч", 15, DamageType::Physical, 100, 0.2, 2.5);
+    std::cout << "Создано общее оружие. Прочность: " << sharedSword->getDurability() << "\n";
+    std::cout << "Количество владельцев до создания персонажей: " << sharedSword.use_count() << "\n";
+
+    auto fighter1 = std::make_unique<Warrior>("Поверхностный1", 120, sharedSword, 20);
+    auto fighter2 = std::make_unique<Warrior>("Поверхностный2", 120, sharedSword, 20);
+    std::cout << "Количество владельцев общего оружия после создания двух персонажей: " << sharedSword.use_count() << "\n";
+
+    std::cout << "Прочность оружия у 1 до использования: " << fighter1->GetWeapon()->getDurability() << "\n";
+    std::cout << "Прочность оружия у 2 до использования: " << fighter2->GetWeapon()->getDurability() << "\n";
+
+    std::cout << "Используем оружие через одного из владельцев\n";
+    fighter1->GetWeapon()->use();
+
+    std::cout << "Прочность оружия у 1 после использования: " << fighter1->GetWeapon()->getDurability() << "\n";
+    std::cout << "Прочность оружия у 2 после использования: " << fighter2->GetWeapon()->getDurability() << "\n";
+
+    std::cout << "\nГЛУБОКАЯ КОПИЯ:\n";
+    auto original = std::make_unique<Warrior>("Оригинал", 120, sharedSword, 20);
+    auto copy = original->Clone();
+
+    std::cout << "Количество владельцев оружия после создания персонажей: " << sharedSword.use_count() << "\n";
+
+    std::cout << "Прочность оружия у оригинала до использования: " << original->GetWeapon()->getDurability() << "\n";
+    std::cout << "Прочность оружия у копии до использования: " << copy->GetWeapon()->getDurability() << "\n";
+
+    std::cout << "Используем оружие через одного из владельцев\n";
+    original->GetWeapon()->use();
+
+    std::cout << "Прочность оружия у оригинала после использования: " << original->GetWeapon()->getDurability() << "\n";
+    std::cout << "Прочность оружия у копии после использования: " << copy->GetWeapon()->getDurability() << "\n";
+
+
+    std::cout << "\n========= РАБОТА СО СТРОКАМИ: =========\n";
+    std::cout << "КОНКАТЕНАЦИЯ:\n";
+    std::string firstName = "Спардудл";
+    std::string lastName = "Дребезжалка";
+    std::cout << "Имя: " << firstName << "\n";
+    std::cout << "Прозвище: " << lastName << "\n";
+    std::string fullName = firstName + " " + lastName;
+    std::cout << "Полное имя: " << fullName << "\n";
+
+    std::cout << "\nПОИСК:\n";
+    size_t pos = fullName.find("Дребезжалка");
+    if (pos != std::string::npos)
     {
-        std::cout << "Создаём бой во вложенном блоке\n";
-        Battle battle(warrior, mage);
-        battle.printState();
-        std::cout << "Делаем несколько ходов\n";
-        while(!battle.isFinished()) {
-            battle.performTurn();
-        }
-        battle.printWinner();
-        std::cout << "Выходим из созданного блока\n";
-    }
-    std::cout << "Проверяем состояние персонажей\n";
-    warrior->printState();
-    mage->printState();
-
-
-    std::cout << "========= ПРОВЕРКА ПРАВИЛ: =========\n";
-    std::cout << "------ Здоровье персонажа не может стать отрицательным ------\n";
-    std::cout << "Создаём персонажа с неотрицательным здоровьем\n";
-    Character Hero("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 100, 0.25, 2.5);
-
-    std::cout << "Попытка создать персонажа с отрицательным здоровьем\n";
-    Character brokenHero("Воин", -100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 100, 0.25, 2.5);
-
-    std::cout << "Попытка нанести персонажу больше урона, чем у него здоровья\n";
-    std::cout << "Наносим персонажу 999 урона (здоровье персонажа: " << Hero.getHealth() << ")\n";
-    int dealtDamage = Hero.takeDamage(999);
-    std::cout << "Полученный урон: " << dealtDamage << "\n";
-    std::cout << "Здоровье персонажа после получения урона: " << Hero.getHealth() << "\n";
-
-    std::cout << "------ Нельзя атаковать, если здоровье персонажа равно 0 ------\n";
-    std::cout << "Попытка живого персонажа атаковать противника\n";
-    Character aliveHero("Живой", 100, 10, 50, 0, 10, 5, 5, 1.0, 0.0, "Меч", 10, DamageType::Physical, 10, 0.0, 0.0);
-    std::cout << "Проверяем, жив ли персонаж\n";
-    if (aliveHero.isAlive())
-    {
-        std::cout << "персонаж жив\n";
-    }
-    else 
-    {
-        std::cout << "персонаж мёртв\n";
-    }
-    std::cout << "Пробуем атаковать от лица персонажа\n";
-    aliveHero.attack(*warrior);
-
-    std::cout << "Попытка мёртвого персонажа атаковать противника\n";
-    std::cout << "Проверяем, жив ли маг\n";
-    if (mage->isAlive())
-    {
-        std::cout << "Маг жив\n";
-    }
-    else 
-    {
-        std::cout << "Маг мёртв\n";
-    }
-    std::cout << "Пробуем атаковать от лица мага\n";
-    mage->attack(*warrior);
-
-    std::cout << "------ Прочность снаряжения не может стать отрицательной ------\n";
-    std::cout << "Попытка создать оружие с отрицательной прочностью\n";
-    Weapon sword("Меч", 20, DamageType::Physical, -12, 0.3, 15.0);
-
-    std::cout << "Создаём оружие с прочностью 2\n";
-    Character tester("Тестер", 100, 10, 50, 0, 10, 5, 5, 1.0, 0.0, "Хрупкий меч", 5, DamageType::Physical, 2, 0.0, 0.0);
-    Character target("Цель", 500, 5, 50, 0, 10, 0, 5, 1.0, 0.0,"Кулак", 1, DamageType::Physical, 100, 0.0, 0.0);
-    std::cout << "Прочность оружия до атак: " << tester.getWeapon().getDurability() << "\n";
-    for (int i = 0; i < 4; i++)
-    {
-        tester.attack(target);
-    }
-    std::cout << "Прочность после 4 атак: " << tester.getWeapon().getDurability() << "\n";
-
-    std::cout << "------ Шанс критического удара не может быть меньше 0% и больше 100% ------\n";
-    std::cout << "Попытка создать персонажа с шансом крита от 0% до 100%\n";
-    Character character("Персонаж", 100, 10, 50, 0, 10, 5, 5, 1.5, 20.0, "Меч", 10, DamageType::Physical, 10, 0.0, 0.0);
-    std::cout << "Попытка создать персонажа с шансом крита >100%\n";
-    Character broken("Сломанный", 100, 10, 50, 0, 10, 5, 5, 1.5, 150.0, "Меч", 10, DamageType::Physical, 10, 0.0, 0.0);
-    std::cout << "Попытка создать персонажа с шансом крита <0%\n";
-    Character broken2("Сломанный2", 100, 10, 50, 0, 10, 5, 5, 1.5, -20.0, "Меч", 10, DamageType::Physical, 10, 0.0, 0.0);
-
-    std::cout << "------ Бой завершается, как только здоровье одного из персонажей становится равным 0 ------\n";
-    std::cout << "Работа этого правила была продемонстрирована в блоке с демонстрацией работы агрегации\n";
-
-
-    std::cout << "========= РАБОТА С ОПЕРАТОРАМИ ПО ССЫЛКЕ И ПО УКАЗАТЕЛЮ: =========\n";
-    std::cout << "Создадим указатель на объект warrior\n";
-    auto pointer = warrior;
-    pointer->printState();
-
-    std::cout << "Создадим ссылку на тот же объект\n";
-    Character& link = *pointer;
-    link.printState();
-
-    std::cout << "Изменяем объект через указатель\n";
-    pointer->takeDamage(15);
-    std::cout << "Указатель:\n";
-    pointer->printState();
-    std::cout << "Ссылка:\n";
-    link.printState();
-
-    std::cout << "Изменяем объект через ссылку\n";
-    link.heal(10);
-    std::cout << "Указатель:\n";
-    pointer->printState();
-    std::cout << "Ссылка:\n";
-    link.printState();
-
-    std::cout << "Переприсваеваем указатель на другой объект(mage)\n";
-    pointer = mage;
-    pointer->printState();
-    
-    std::cout << "Ссылка остаётся привязаной к warrior\n";
-    link.printState();
-
-
-    std::cout << "========= ДИНАМИЧЕСКИЙ МАССИВ ОБЪЕКТОВ: =========\n";
-    std::cout << "Создаём динамический массив из 2 объектов\n";
-    auto team = std::make_unique<Character[]>(2);
-    team[0] = Character("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 100, 0.25, 2.5);
-    team[1] = Character("Маг", 80, 5, 15, 50, 10, 5, 35, 1.2, 25.0, "Посох", 10, DamageType::Magical, 35, 1.0, 0.5);
-    std::cout << "Содержимое массива:\n";
-    for(int i=0; i<2; i++)
-    {
-        team[i].printState();
-    }
-    std::cout << "Удаляем массив\n";
-    team.reset();
-    std::cout << "Массив удалён\n";
-
-
-    std::cout << "========= МАССИВ ДИНАМИЧЕСКИХ ОБЪЕКТОВ: =========\n";
-    std::cout << "Создаём массив указателей на 2 персонажей\n";
-    std::unique_ptr<Character> team2[2];
-    team2[0] = std::make_unique<Character>("Воин", 100, 25, 50, 0, 10, 10, 5, 1.5, 20.0, "Меч", 12, DamageType::Physical, 100, 0.25, 2.5);
-    team2[1] = std::make_unique<Character>("Маг", 80, 5, 15, 50, 10, 5, 35, 1.2, 25.0, "Посох", 10, DamageType::Magical, 35, 1.0, 0.5);
-    for(int i=0; i<2; i++)
-    {
-        team2[i]->printState();
-    }
-    std::cout << "Удаляем каждый объект массива\n";
-    for(int i = 0; i < 2; i++)
-    {
-        team2[i].reset();
-    }
-    std::cout << "Все объекты удалены\n";
-
-    std::cout << "========= ПЕРЕДАЧА ВЛАДЕНИЯ UNIQUE_PTR: =========\n";
-    {
-        std::cout << "Создаём бой. Владелец: battle\n";
-        auto battle = std::make_unique<Battle>(warrior, mage);
-        std::cout << "Передаём владение боем movedBattle\n";
-        auto movedBattle = std::move(battle);
-        std::cout << "Проверяем исходный указатель\n";
-        if (!battle) 
-        {
-            std::cout << "Исходный указатель пуст\n";
-        }
-        else
-        {
-            std::cout << "Исходный указатель не пуст\n";
-        }
-        std::cout << "Выход из блока\n";
-    }
-
-    std::cout << "========= СЧЁТЧИК ВЛАДЕЛЬЦЕВ SHARED_PTR: =========\n";
-    {
-        std::cout << "Создаём объект через make_shared\n";
-        auto rogue = std::make_shared<Character>("Разбойник", 50, 10, 20, 0, 15, 3, 5, 1.2, 10.0, "Кинжал", 8, DamageType::Physical, 20, 0.0, 0.0);
-        std::cout << "Счётчик владельцев после создания: " << rogue.use_count() << "\n";
-        {
-            std::cout << "Копируем указатель во вложенном блоке\n";
-            auto copy = rogue;
-            std::cout << "Счётчик владельцев после копирования: " << rogue.use_count() << "\n";
-            std::cout << "Выходим из вложенного блока\n";
-        }
-        std::cout << "Счётчик владельцев после выхода из блока: " << rogue.use_count() << "\n";
-        std::cout << "Уничтожаем последнего владельца\n";
-        rogue.reset();
-    }
-
-    std::cout << "========= ДЕМОНСТРАЦИЯ WEAK_PTR: =========\n";
-    std::cout << "Создаём слабую ссылку на warrior\n";
-    std::weak_ptr<Character> watcher = warrior;
-    std::cout << "Проверяем жив ли warrior\n";
-    if (watcher.lock() != nullptr)
-    {
-        std::cout << "Warrior жив\n";
+        std::string alias = fullName.substr(pos);
+        std::cout << "Найдено прозвище: " << alias << "\n";
     }
     else
     {
-        std::cout << "Warrior уничтожен\n";
-    }
-    std::cout << "Уничтожаем последнего владельца warrior\n";
-    warrior.reset();
-    std::cout << "Проверяем жив ли warrior\n";
-    if (watcher.lock() != nullptr)
-    {
-        std::cout << "Warrior жив\n";
-    }
-    else
-    {
-        std::cout << "Warrior уничтожен\n";
+        std::cout << "Ничего не найдено\n";
     }
 
-    std::cout << "\n\nУдаляем ненужные объекты\n";
-    pointer.reset();
-    mage.reset();
+    std::cout << "\nСРАВНЕНИЕ:\n";
+    int isSame = lastName.compare("Дребезжалка");
+    std::cout << "Результат сравнения: " << (isSame == 0 ? "равно" : "не равно") << "\n";
+
+
+    std::cout << "\n========= ПЕРЕДАЧА ТЕКУЩЕГО ОБЪЕКТА ДРУГОМУ ОБЪЕКТУ: =========\n";
+    BattleLog::PrintBattleLog();
+
+
+    std::cout << "\n========= СТАТИЧЕСКОЕ ПОЛЕ: =========\n";
+    std::cout << "Количество созданных персонажей: " << BaseCharacter::GetCount() << "\n";
+
 }

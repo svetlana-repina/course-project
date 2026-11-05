@@ -4,8 +4,8 @@ namespace RpgBattleSystem
 {
     public class Battle
     {
-        private Character _fighter1;
-        private Character _fighter2;
+        private BaseCharacter _fighter1;
+        private BaseCharacter _fighter2;
         private int _turnCount;
 
         public Battle()
@@ -16,7 +16,7 @@ namespace RpgBattleSystem
             Console.WriteLine("Создан пустой бой");
         }
 
-        public Battle(Character f1, Character f2)
+        public Battle(BaseCharacter f1, BaseCharacter f2)
         {
             if (f1 == null || f2 == null)
             {
@@ -32,7 +32,7 @@ namespace RpgBattleSystem
             Console.WriteLine($"Начался бой между {f1.Name} и {f2.Name}");
         }
 
-        public Character GetWinner()
+        public BaseCharacter GetWinner()
         {
             if (_fighter1 == null || _fighter2 == null)
             {
@@ -91,7 +91,7 @@ namespace RpgBattleSystem
                 Console.WriteLine("Бой ещё не закончен");
                 return;
             }
-            Character winner = GetWinner();
+            BaseCharacter winner = GetWinner();
             if (winner != null)
             {
                 Console.WriteLine($"{winner.Name} победил за {_turnCount} ходов");
@@ -107,11 +107,11 @@ namespace RpgBattleSystem
             string str = $"======== Текущее состояние боя (ход {_turnCount}) ========\n";
             if (_fighter1 != null)
             {
-                str += _fighter1.ToString() + "\n";
+                str += _fighter1.Describe();
             }
             if (_fighter2 != null)
             {
-                str += _fighter2.ToString() + "\n";
+                str += _fighter2.Describe();
             }
             str += "===============================================";
             return str;

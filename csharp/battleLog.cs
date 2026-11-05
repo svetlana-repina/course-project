@@ -5,19 +5,19 @@ namespace RpgBattleSystem
 {
     public class BattleLog : IDisposable
     {
-        public string Title { get; }
-        private List<string> _entries;
-        private bool _disposed;
+        public static string _title;
+        private static List<string> _entries = new List<string>();
+        private static bool _disposed;
 
         public  BattleLog(string title)
         {
-            Title = title;
+            _title = title;
             _entries = new List<string>();
             _disposed = false;
-            Console.WriteLine($"Журнал {Title} открыт");
+            Console.WriteLine($"Журнал {_title} открыт");
         }
 
-        public void Log(string message)
+        public static void Log(string message)
         {
             if (_disposed)
             {
@@ -28,18 +28,12 @@ namespace RpgBattleSystem
             _entries.Add(message);
         }
 
-        public void LogTurn(int turnNumber, string attacker, string target, int damage, bool isCrit)
+        public static void LogAttack(BaseCharacter attacker, BaseCharacter target)
         {
-            if (_disposed)
-            {
-                Console.WriteLine("Журнал закрыт, невозможно добавить запись");
-                return;
-            }
-            string critMark = isCrit ? "(крит)" : "";
-            _entries.Add($"Ход {turnNumber}: {attacker} атакует {target}, урон: {damage}{critMark}");
+            _entries.Add($"{attacker.Name} атакует {target.Name}");
         }
 
-        public void LogResult(Character winner)
+        public static void LogResult(BaseCharacter winner)
         {
             if (winner != null)
             {
@@ -51,14 +45,14 @@ namespace RpgBattleSystem
             }
         }
 
-        public int GetEntryCount()
+        public static int GetEntryCount()
         {
             return _entries.Count;
         }
 
-        public void PrintBattleLog()
+        public static void PrintBattleLog()
         {
-            Console.WriteLine($"\n========== ЖУРНАЛ БОЯ {Title} ==========");
+            Console.WriteLine($"\n========== ЖУРНАЛ БОЯ {_title} ==========");
             foreach (string entry in _entries)
             {
                 Console.WriteLine($" {entry}");
@@ -72,7 +66,7 @@ namespace RpgBattleSystem
             {
                 return;
             }
-            Console.WriteLine($"Журнал {Title} закрыт.\nЗаписей: {_entries.Count}");
+            Console.WriteLine($"Журнал {_title} закрыт.\nЗаписей: {_entries.Count}");
             _disposed = true;
         }
     }

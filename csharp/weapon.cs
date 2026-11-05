@@ -60,6 +60,17 @@ namespace RpgBattleSystem
             BonusCritChance = bonusCritChance;
             Console.WriteLine($"Создано оружие: {Name}");
         }
+
+        public Weapon(Weapon other)
+        {
+            Name = other.Name;
+            DamageType = other.DamageType;
+            MaxDurability = other.MaxDurability;
+            BonusCrit = other.BonusCrit;
+            BonusCritChance = other.BonusCritChance;
+            _damage = other.Damage;
+            _durability = other.Durability;
+        }
         
         public int CalculateBaseDamage(int strength)
         {

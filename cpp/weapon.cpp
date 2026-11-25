@@ -1,4 +1,5 @@
 #include "weapon.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 
 Weapon::Weapon()
@@ -22,31 +23,26 @@ Weapon::Weapon(const std::string& name, int damage, DamageType damageType, int m
     bonusCrit(bonusCrit), 
     bonusCritChance(bonusCritChance)
 {
-    if (damage <= 0) 
+    if (damage <= 0)
     {
-        std::cout << "Ошибка! Урон оружия не может быть <=0. Установлено значение 1.\n";
-        this->damage = 1;
+        throw InvalidCharacterParameter("damage", damage);
     }
-    if (maxDurability <= 0 || maxDurability > 100) 
+    if (maxDurability <= 0 || maxDurability > 100)
     {
-        std::cout << "Ошибка! Максимальная прочность оружия должна быть >0 и <=100. Установлено значение 100.\n";
-        this->durability = 100;
-        this->maxDurability = 100;
+        throw InvalidCharacterParameter("maxDurability", maxDurability);
     }
-    if (bonusCrit < 0.0) 
+    if (bonusCrit < 0.0)
     {
-        std::cout << "Ошибка! Бонус к крит урону не может быть <0. Установлено значение 0.\n";
-        this->bonusCrit = 0;
+        throw InvalidCharacterParameter("bonusCrit", bonusCrit);
     }
-    if (bonusCritChance < 0.0) 
+    if (bonusCritChance < 0.0)
     {
-        std::cout << "Ошибка! Бонус к крит шансу не может быть <0. Установлено значение 0.\n";
-        this->bonusCritChance = 0;
+        throw InvalidCharacterParameter("bonusCritChance", bonusCritChance);
     }
     std::cout << "Создано оружие: " << name << "\n";
 }
 
-Weapon::~Weapon()
+Weapon::~Weapon() noexcept
 {
     std::cout << "Оружие уничтожено: " << name << "\n";
 }

@@ -1,5 +1,6 @@
 #include "rogue.hpp"
 #include "battle_log.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 #include <algorithm>
 
@@ -9,13 +10,12 @@ Rogue::Rogue(const std::string& name, int maxHealth, std::shared_ptr<Weapon> wea
 {
     if (poisonDamage < 0)
     {
-        std::cout << "Ошибка! Урон от яда не может быть <0. Установлено значение 0.\n";
-        this->poisonDamage = 0;
+        throw InvalidCharacterParameter("poisonDamage", poisonDamage);
     }
     std::cout << "Создан разбойник: " << GetName() << "\n";
 }
 
-Rogue::~Rogue()
+Rogue::~Rogue() noexcept
 {
     std::cout << "Разбойник уничтожен: " << GetName() << "\n";
 }
@@ -24,14 +24,12 @@ int Rogue::Attack(BaseCharacter& target)
 {
     if (!IsAlive())
     {
-        std::cout << GetName() << " мёртв и не может атаковать\n";
-        return 0;
+        throw CharacterIsDead(GetName());
     }
 
     if (!target.IsAlive())
     {
-        std::cout << target.GetName() << " уже мёртв\n";
-        return 0;
+        throw CharacterIsDead(target.GetName());
     }
 
     int totalDealtDamage = 0;
@@ -40,9 +38,7 @@ int Rogue::Attack(BaseCharacter& target)
     {
         if (!SpendStamina(staminaAttackCost))
         {
-            std::cout << GetName() << " устал и не может атаковать\n";
-            SkipTurn();
-            break;
+            throw NotEnoughStamina(GetName(), staminaAttackCost, GetStamina());
         }
 
         int baseDamage = GetWeapon()->calculateBaseDamage(GetStrength());
@@ -87,21 +83,17 @@ void Rogue::UseSkill(BaseCharacter& target)
 {
     if (!IsAlive())
     {
-        std::cout << GetName() << " мёртв и не может атаковать\n";
-        return;
+        throw CharacterIsDead(GetName());
     }
 
     if (!target.IsAlive())
     {
-        std::cout << target.GetName() << " уже мёртв\n";
-        return;
+        throw CharacterIsDead(target.GetName());
     }
 
     if (!SpendStamina(staminaSkillCost))
     {
-        std::cout << GetName() << " устал и не может использовать навык\n";
-        SkipTurn();
-        return;
+        throw NotEnoughStamina(GetName(), staminaSkillCost, GetStamina());
     }
 
     for (int i = 0; i < 2; i++)

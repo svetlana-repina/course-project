@@ -1,5 +1,6 @@
 #include "mage.hpp"
 #include "battle_log.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 #include <algorithm>
 #include <cmath>
@@ -11,14 +12,12 @@ Mage::Mage(const std::string& name, int maxHealth, std::shared_ptr<Weapon> weapo
 {
     if (maxMana <= 0)
     {
-        std::cout << "Ошибка! Мана должна быть >0. Установлено значение 10.\n";
-        this->maxMana = 10;
-        this->mana = 10;
+        throw InvalidCharacterParameter("maxMana", maxMana);
     }
     std::cout << "Создан маг: " << GetName() << "\n";
 }
 
-Mage::~Mage()
+Mage::~Mage() noexcept
 {
     std::cout << "Маг уничтожен: " << GetName() << "\n";
 }
@@ -27,21 +26,17 @@ int Mage::Attack(BaseCharacter& target)
 {
     if (!IsAlive())
     {
-        std::cout << GetName() << " мёртв и не может атаковать\n";
-        return 0;
+        throw CharacterIsDead(GetName());
     }
     
     if (!target.IsAlive())
     {
-        std::cout << target.GetName() << " уже мёртв\n";
-        return 0;
+        throw CharacterIsDead(target.GetName());
     }
 
     if (mana < manaAttackCost)
     {
-        std::cout << GetName() << " не хватает маны для атаки\n";
-        SkipTurn();
-        return 0;
+        throw NotEnoughMana(GetName(), manaAttackCost, mana);
     }
 
     mana -= manaAttackCost;
@@ -80,21 +75,17 @@ void Mage::UseSkill(BaseCharacter& target)
 {
     if (!IsAlive())
     {
-        std::cout << GetName() << " мёртв и не может использовать навык\n";
-        return;
+        throw CharacterIsDead(GetName());
     }
 
     if (!target.IsAlive())
     {
-        std::cout << target.GetName() << " уже мёртв\n";
-        return;
+        throw CharacterIsDead(target.GetName());
     }
 
     if (mana < manaSkillCost)
     {
-        std::cout << GetName() << " не хватает маны для использования навыка\n";
-        SkipTurn();
-        return;
+        throw NotEnoughMana(GetName(), manaSkillCost, mana);
     }
 
     mana -= manaSkillCost;
@@ -111,7 +102,27 @@ void Mage::SkipTurn()
     std::cout << GetName() << " пропускает ход и восстанавливает часть маны\n";
 }
 
+bool Mage::SpendMana(int amount)
+{
+    if (amount < 0 || mana < amount) return false;
+    mana -= amount;
+    return true;
+}
+
+void Mage::RestoreMana(int amount)
+{
+    if (amount > 0)
+    {
+        mana = std::min(mana + amount, maxMana);
+    }
+}
+
 int Mage::GetMana() const
 {
     return mana;
+}
+
+int Mage::GetMaxMana() const
+{
+    return maxMana;
 }

@@ -1,5 +1,6 @@
 #include "warrior.hpp"
 #include "battle_log.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 #include <algorithm>
 
@@ -9,18 +10,16 @@ Warrior::Warrior(const std::string& name, int maxHealth, std::shared_ptr<Weapon>
 {
     if (rage < 0)
     {
-        std::cout << "Ошибка! Ярость должна быть >=0. Установлено значение 0.\n";
-        this->rage = 0;
+        throw InvalidCharacterParameter("rage", rage);
     }
     if (rage > maxRage)
     {
-        std::cout << "Ошибка! Ярость не может быть больше " << maxRage << ". Установлено значение " << maxRage << ".\n";
-        this->rage = maxRage;
+        throw InvalidCharacterParameter("rage", rage);
     }
     std::cout << "Создан воин: " << name << "\n";
 }
 
-Warrior::~Warrior()
+Warrior::~Warrior() noexcept
 {
     std::cout << "Воин уничтожен: " << GetName() << "\n";
 }
@@ -29,21 +28,17 @@ int Warrior::Attack(BaseCharacter& target)
 {
     if (!IsAlive())
     {
-        std::cout << GetName() << " мёртв и не может атаковать\n";
-        return 0;
+        throw CharacterIsDead(GetName());
     }
 
     if (!target.IsAlive())
     {
-        std::cout << target.GetName() << " уже мёртв\n";
-        return 0;
+        throw CharacterIsDead(target.GetName());
     }
     
     if (!SpendStamina(staminaAttackCost))
     {
-        std::cout << GetName() << " слишком устал и не может атаковать\n";
-        SkipTurn();
-        return 0;
+        throw NotEnoughStamina(GetName(), staminaAttackCost, GetStamina());
     }
 
     int rageBonus = static_cast<int>(rage * 0.1);
@@ -82,21 +77,17 @@ void Warrior::UseSkill(BaseCharacter& target)
 {
     if (!IsAlive())
     {
-        std::cout << GetName() << " мёртв и не может атаковать\n";
-        return;
+        throw CharacterIsDead(GetName());
     }
 
     if (!target.IsAlive())
     {
-        std::cout << target.GetName() << " уже мёртв\n";
-        return;
+        throw CharacterIsDead(target.GetName());
     }
 
     if (!SpendStamina(staminaSkillCost))
     {
-        std::cout << GetName() << " слишком устал и не может использовать навык\n";
-        SkipTurn();
-        return;
+        throw NotEnoughStamina(GetName(), staminaSkillCost, GetStamina());
     }
 
     int doubleDamage = GetWeapon()->calculateBaseDamage(GetStrength()) * 2;
@@ -124,4 +115,9 @@ void Warrior::SkipTurn()
 int Warrior::GetRage() const
 {
     return rage;
+}
+
+std::string Warrior::GetKind() const
+{
+    return "воин";
 }

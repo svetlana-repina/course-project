@@ -1,4 +1,5 @@
 #include "base_character.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 #include <utility>
 #include <cmath>
@@ -42,45 +43,35 @@ BaseCharacter::BaseCharacter(const std::string& name, int maxHealth, int strengt
 {
     if (maxHealth <= 0)
     {
-        std::cout << "Ошибка! Здоровье должно быть больше 0. Установлено значение 100.\n";
-        this->health = 100;
-        this->maxHealth = 100;
+        throw InvalidCharacterParameter("maxHealth", maxHealth);
     }
     if (strength < 0)
     {
-        std::cout << "Ошибка! Сила должна быть >= 0. Установлено значение 3.\n";
-        this->strength = 3;
+        throw InvalidCharacterParameter("strength", strength);
     }
     if (maxStamina <= 0)
     {
-        std::cout << "Ошибка! Выносливость должна быть больше 0. Установлено значение 25.\n";
-        this->stamina = 25;
-        this->maxStamina = 25;
+        throw InvalidCharacterParameter("maxStamina", maxStamina);
     }
     if (agility < 0)
     {
-        std::cout << "Ошибка! Ловкость должна быть >= 0. Установлено значение 5.\n";
-        this->agility = 5;
+        throw InvalidCharacterParameter("agility", agility);
     }
     if (defense < 0)
     {
-        std::cout << "Ошибка! Защита должна быть >= 0. Установлено значение 0.\n";
-        this->defense = 0;
+        throw InvalidCharacterParameter("defense", defense);
     }
     if (intelligence < 0)
     {
-        std::cout << "Ошибка! Интеллект должен быть >= 0. Установлено значение 3.\n";
-        this->intelligence = 3;
+        throw InvalidCharacterParameter("intelligence", intelligence);
     }
     if (crit < 1.0)
     {
-        std::cout << "Ошибка! Множитель критического урона должен быть >=1. Установлено значение 1.\n";
-        this->crit = 1;
+        throw InvalidCharacterParameter("crit", crit);
     }
     if (critChance < 0.0 || critChance > 100.0)
     {
-        std::cout << "Ошибка! Шанс критического удара должен быть >=0 и <=100. Установлено значение 0.\n";
-        this->critChance = 0;
+        throw InvalidCharacterParameter("critChance", critChance);
     }
     count++;
     std::cout << "Создан персонаж: " << this->name << "\n";
@@ -165,7 +156,7 @@ BaseCharacter& BaseCharacter::operator=(BaseCharacter&& other) noexcept
     return *this;
 }
 
-BaseCharacter::~BaseCharacter()
+BaseCharacter::~BaseCharacter() noexcept
 {
     count--;
     std::cout << "Персонаж уничтожен: " << name << "\n";
@@ -244,6 +235,11 @@ double BaseCharacter::GetTotalCritChance() const
 std::shared_ptr<Weapon> BaseCharacter::GetWeapon() const
 {
     return weapon;
+}
+
+std::string BaseCharacter::GetKind() const
+{
+    return "персонаж";
 }
 
 int BaseCharacter::TakeDamage(int amount)

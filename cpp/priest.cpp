@@ -1,5 +1,6 @@
 #include "priest.hpp"
 #include "battle_log.hpp"
+#include "exceptions.hpp"
 #include <iostream>
 #include <algorithm>
 
@@ -10,14 +11,12 @@ Priest::Priest(const std::string& name, int maxHealth, std::shared_ptr<Weapon> w
 {
     if (maxMana <= 0)
     {
-        std::cout << "Ошибка! Мана должна быть >0. Установлено значение 10.\n";
-        this->maxMana = 10;
-        this->mana = 10;
+        throw InvalidCharacterParameter("maxMana", maxMana);
     }
     std::cout << "Создан жрец: " << GetName() << "\n";
 }
 
-Priest::~Priest()
+Priest::~Priest() noexcept
 {
     std::cout << "Жрец уничтожен: " << GetName() << "\n";
 }
@@ -26,21 +25,17 @@ int Priest::Attack(BaseCharacter& target)
 {
     if (!IsAlive())
     {
-        std::cout << GetName() << " мёртв и не может атаковать\n";
-        return 0;
+        throw CharacterIsDead(GetName());
     }
     
     if (!target.IsAlive())
     {
-        std::cout << target.GetName() << " уже мёртв\n";
-        return 0;
+        throw CharacterIsDead(target.GetName());
     }
 
     if (mana < manaAttackCost)
     {
-        std::cout << GetName() << " не хватает маны для атаки\n";
-        SkipTurn();
-        return 0;
+        throw NotEnoughMana(GetName(), manaAttackCost, mana);
     }
 
     mana -= manaAttackCost;
@@ -86,15 +81,12 @@ void Priest::UseSkill(BaseCharacter& target)
 {
     if (!IsAlive())
     {
-        std::cout << GetName() << " мёртв и не может использовать навык\n";
-        return;
+        throw CharacterIsDead(GetName());
     }
 
     if (mana < manaSkillCost)
     {
-        std::cout << GetName() << " не хватает маны для использования навыка\n";
-        SkipTurn();
-        return;
+        throw NotEnoughMana(GetName(), manaSkillCost, mana);
     }
 
     mana -= manaSkillCost;
@@ -109,7 +101,27 @@ void Priest::SkipTurn()
     std::cout << GetName() << " пропускает ход и восстанавливает часть маны\n";
 }
 
+bool Priest::SpendMana(int amount)
+{
+    if (amount < 0 || mana < amount) return false;
+    mana -= amount;
+    return true;
+}
+
+void Priest::RestoreMana(int amount)
+{
+    if (amount > 0)
+    {
+        mana = std::min(mana + amount, maxMana);
+    }
+}
+
 int Priest::GetMana() const
 {
     return mana;
+}
+
+int Priest::GetMaxMana() const
+{
+    return maxMana;
 }

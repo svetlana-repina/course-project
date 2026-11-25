@@ -22,7 +22,7 @@ class Weapon
         Weapon();
         Weapon(const std::string& name, int damage, DamageType damageType, 
             int maxDurability, double bonusCrit, double bonusCritChance);
-        ~Weapon();
+        ~Weapon() noexcept;
 
         [[nodiscard]] std::string getName() const;
         [[nodiscard]] int getDamage() const;

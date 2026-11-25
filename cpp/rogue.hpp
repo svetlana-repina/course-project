@@ -10,7 +10,7 @@ private:
 
 public:
     Rogue(const std::string& name, int maxHealth, std::shared_ptr<Weapon> weapon, int poisonDamage);
-    ~Rogue() override;
+    ~Rogue() noexcept override;
     [[nodiscard]] int Attack(BaseCharacter& target) override;
     [[nodiscard]] std::unique_ptr<BaseCharacter> Clone() const override;
     [[nodiscard]] std::string Describe() const override;

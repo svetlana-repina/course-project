@@ -17,13 +17,11 @@ namespace RpgBattleSystem
         {
             if (rage < 0)
             {
-                Console.WriteLine("Ошибка! Ярость должна быть >=0. Установлено значение 0.");
-                rage = 0;
+                throw new InvalidCharacterParameter("rage", rage);
             }
             if (rage > MaxRage)
             {
-                Console.WriteLine($"Ошибка! Ярость не может быть больше {MaxRage}. Установлено значение {MaxRage}.");
-                rage = MaxRage;
+                throw new InvalidCharacterParameter("rage", rage);
             }
             Rage = rage;
             Console.WriteLine($"Создан воин: {Name}");
@@ -41,19 +39,15 @@ namespace RpgBattleSystem
         {
             if (!IsAlive())
             {
-                Console.WriteLine($"{Name} мёртв и не может атаковать");
-                return 0;
+                throw new CharacterIsDead(Name);
             }
             if (!target.IsAlive())
             {
-                Console.WriteLine($"{target.Name} уже мёртв");
-                return 0;
+                throw new CharacterIsDead(target.Name);
             }
             if (!SpendStamina(StaminaAttackCost))
             {
-                Console.WriteLine($"{Name} слишком устал и не может атаковать");
-                SkipTurn();
-                return 0;
+                throw new NotEnoughStamina(Name, StaminaAttackCost, Stamina);
             }
 
             int rageBonus = (int)(Rage * 0.1);
@@ -82,19 +76,15 @@ namespace RpgBattleSystem
         {
             if (!IsAlive())
             {
-                Console.WriteLine($"{Name} мёртв и не может атаковать");
-                return;
+                throw new CharacterIsDead(Name);
             }
             if (!target.IsAlive())
             {
-                Console.WriteLine($"{target.Name} уже мёртв");
-                return;
+                throw new CharacterIsDead(target.Name);
             }
             if (!SpendStamina(StaminaSkillCost))
             {
-                Console.WriteLine($"{Name} слишком устал и не может использовать навык");
-                SkipTurn();
-                return;
+                throw new NotEnoughStamina(Name, StaminaSkillCost, Stamina);
             }
 
             int doubleDamage = Weapon.CalculateBaseDamage(Strength) * 2;
@@ -123,5 +113,7 @@ namespace RpgBattleSystem
         public override BaseCharacter Clone() => new Warrior(this);
 
         public override string Describe() => base.Describe() + $"Ярость:                  {Rage}/{MaxRage}\n";
+
+        public new string GetKind() => "воин";
     }
 }

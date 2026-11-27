@@ -2,7 +2,7 @@ using System;
 
 namespace RpgBattleSystem
 {
-    public abstract class BaseCharacter
+    public abstract class BaseCharacter : IComparable<BaseCharacter>
     {
         private static int _count = 0;
         private static readonly Random _random = new Random();
@@ -32,44 +32,35 @@ namespace RpgBattleSystem
             Name = name;
             if (maxHealth <= 0)
             {
-                Console.WriteLine("Ошибка! Здоровье должно быть > 0. Установлено значение 100.");
-                maxHealth = 100;
+                throw new InvalidCharacterParameter("maxHealth", maxHealth);
             }
             if (strength < 0)
             {
-                Console.WriteLine("Ошибка! Сила должна быть >= 0. Установлено значение 3.");
-                strength = 3;
+                throw new InvalidCharacterParameter("strength", strength);
             }
             if (maxStamina < 0)
             {
-                Console.WriteLine("Ошибка! Выносливость должна быть >= 0. Установлено значение 25.");
-                maxStamina = 25;
+                throw new InvalidCharacterParameter("maxStamina", maxStamina);
             }
             if (agility < 0)
             {
-                Console.WriteLine("Ошибка! Ловкость должна быть >= 0. Установлено значение 5.");
-                agility = 5;
+                throw new InvalidCharacterParameter("agility", agility);
             }
-
             if (defense < 0)
             {
-                Console.WriteLine("Ошибка! Защита должна быть >= 0. Установлено значение 0.");
-                defense = 0;
+                throw new InvalidCharacterParameter("defense", defense);
             }
             if (intelligence < 0)
             {
-                Console.WriteLine("Ошибка! Интеллект должен быть >= 0. Установлено значение 3.");
-                intelligence = 3;
+                throw new InvalidCharacterParameter("intelligence", intelligence);
             }
             if (crit < 1.0)
             {
-                Console.WriteLine("Ошибка! Множитель критического урона должен быть >=1. Установлено значение 1.");
-                crit = 1.0;
+                throw new InvalidCharacterParameter("crit", crit);
             }
             if (critChance < 0.0 || critChance > 100.0)
             {
-                Console.WriteLine("Ошибка! Шанс критического удара должен быть >=0 и <=100. Установлено значение 0.");
-                critChance = 0.0;
+                throw new InvalidCharacterParameter("critChance", critChance);
             }
             Health = maxHealth;
             MaxHealth = maxHealth;
@@ -160,8 +151,7 @@ namespace RpgBattleSystem
         {
             if (!IsAlive())
             {
-                Console.WriteLine("Мёртвого персонажа нельзя вылечить");
-                return;
+                throw new CharacterIsDead(Name);
             }
             if (amount <= 0)
             {
@@ -219,6 +209,17 @@ namespace RpgBattleSystem
             hash.Add(Weapon?.Durability);
             return hash.ToHashCode();
         }
+
+        public int CompareTo(BaseCharacter other)
+        {
+            if (other == null)
+            {
+                return 1;
+            }
+            return string.Compare(Name, other.Name, StringComparison.CurrentCulture);
+        }
+
+        public string GetKind() => "персонаж";
 
         protected bool SpendStamina(int amount)
         {

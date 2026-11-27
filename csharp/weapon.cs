@@ -36,26 +36,23 @@ namespace RpgBattleSystem
             DamageType = damageType;
             if (damage <= 0)
             {
-                Console.WriteLine("Ошибка! Урон оружия не может быть <=0. Установлено значение 1.");
+                throw new InvalidCharacterParameter("damage", damage);
             }
             Damage = damage;
             if (maxDurability <= 0 || maxDurability > 100)
             {
-                Console.WriteLine("Ошибка! Максимальная прочность оружия должна быть >0 и <=100. Установлено значение 100.");
-                maxDurability = 100;
+                throw new InvalidCharacterParameter("maxDurability", maxDurability);
             }
             MaxDurability = maxDurability;
             Durability = maxDurability;
             if (bonusCrit < 0.0)
             {
-                Console.WriteLine("Ошибка! Бонус к крит урону не может быть <0. Установлено значение 0.");
-                bonusCrit = 0.0;
+                throw new InvalidCharacterParameter("bonusCrit", bonusCrit);
             }
             BonusCrit = bonusCrit;
             if (bonusCritChance < 0.0)
             {
-                Console.WriteLine("Ошибка! Бонус к крит шансу не может быть <0. Установлено значение 0.");
-                bonusCritChance = 0.0;
+                throw new InvalidCharacterParameter("bonusCritChance", bonusCritChance);
             }
             BonusCritChance = bonusCritChance;
             Console.WriteLine($"Создано оружие: {Name}");

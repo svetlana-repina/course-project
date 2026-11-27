@@ -14,8 +14,7 @@ namespace RpgBattleSystem
         {
             if (poisonDamage < 0)
             {
-                Console.WriteLine("Ошибка! Урон от яда не может быть <0. Установлено значение 0.");
-                poisonDamage = 0;
+                throw new InvalidCharacterParameter("poisonDamage", poisonDamage);
             }
             PoisonDamage = poisonDamage;
             Console.WriteLine($"Создан разбойник: {Name}");
@@ -33,13 +32,11 @@ namespace RpgBattleSystem
         {
             if (!IsAlive())
             {
-                Console.WriteLine($"{Name} мёртв и не может атаковать");
-                return 0;
+                throw new CharacterIsDead(Name);
             }
             if (!target.IsAlive())
             {
-                Console.WriteLine($"{target.Name} уже мёртв");
-                return 0;
+                throw new CharacterIsDead(target.Name);
             }
 
             int totalDealtDamage = 0;
@@ -48,9 +45,7 @@ namespace RpgBattleSystem
             {
                 if (!SpendStamina(StaminaAttackCost))
                 {
-                    Console.WriteLine($"{Name} слишком устал и не может атаковать");
-                    SkipTurn();
-                    break;
+                    throw new NotEnoughStamina(Name, StaminaAttackCost, Stamina);
                 }
 
                 int baseDamage = Weapon.CalculateBaseDamage(Strength);
@@ -80,19 +75,15 @@ namespace RpgBattleSystem
         {
             if (!IsAlive())
             {
-                Console.WriteLine($"{Name} мёртв и не может атаковать");
-                return;
+                throw new CharacterIsDead(Name);
             }
             if (!target.IsAlive())
             {
-                Console.WriteLine($"{target.Name} уже мёртв");
-                return;
+                throw new CharacterIsDead(target.Name);
             }
             if (!SpendStamina(StaminaSkillCost))
             {
-                Console.WriteLine($"{Name} слишком устал и не может использовать навык");
-                SkipTurn();
-                return;
+                throw new NotEnoughStamina(Name, StaminaSkillCost, Stamina);
             }
 
             for (int i = 0; i < 2; i++)

@@ -6,129 +6,175 @@ namespace RpgBattleSystem
 {
     class Program
     {
+        private static void TryRecoverMana(BaseCharacter character, int amount)
+        {
+            if (character is IManaUser manaUser)
+            {
+                manaUser.RestoreMana(amount);
+                Console.WriteLine($"через интерфейс IManaUser восстановлено {amount}, мана: {manaUser.Mana}/{manaUser.MaxMana}");
+            }
+            else
+            {
+                Console.WriteLine("интерфейс IManaUser не реализован");
+            }
+        }
+
         static void Main()
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            var sword  = new Weapon("Меч", 15, DamageType.Physical, 100, 0.2, 2.5);
+
+            var sword = new Weapon("Меч", 15, DamageType.Physical, 100, 0.2, 2.5);
             var staff1 = new Weapon("Посох", 12, DamageType.Magical, 100, 0.25, 3.0);
             var staff2 = new Weapon("Посох", 12, DamageType.Magical, 100, 0.25, 3.0);
             var dagger = new Weapon("Кинжал", 7, DamageType.Physical, 100, 0.15, 2.0);
 
-            Console.WriteLine("\n========= ПЕРЕДАЧА ТЕКУЩЕГО ОБЪЕКТА ДРУГОМУ ОБЪЕКТУ: =========");
-            using (var log = new BattleLog("Турнир"))
+            var warrior = new Warrior("Воин", 150, sword, 10);
+            var mage = new Mage("Маг", 100, staff1, 35);
+            var priest = new Priest("Жрец", 90, staff2, 25);
+
+            Console.WriteLine("\n========= РАННЕЕ И ПОЗДНЕЕ СВЯЗЫВАНИЕ: =========");
+            BaseCharacter character = warrior;
+            Console.WriteLine("Раннее связывание (невиртуальный метод GetKind()):");
+            Console.WriteLine(character.GetKind());
+            Console.WriteLine("Позднее связывание (виртуальный метод Describe()):");
+            Console.WriteLine(character.Describe());
+
+            Console.WriteLine("\n========= ИСПОЛЬЗОВАНИЕ ИНТЕРФЕЙСА: =========");
+            TryRecoverMana(mage, 5);
+            TryRecoverMana(priest, 5);
+            TryRecoverMana(warrior, 5);
+
+            Console.WriteLine("\n========= ПРОВЕРКА ТИПА: =========");
+            BaseCharacter warriorBase = warrior;
+            BaseCharacter mageBase = mage;
+
+            bool isNotManaUser = (warriorBase as IManaUser) == null;
+            Console.WriteLine($"warrior as IManaUser: {(isNotManaUser ? "null" : "не null")}");
+
+            isNotManaUser = (mageBase as IManaUser) == null;
+            Console.WriteLine($"mage as IManaUser: {(isNotManaUser ? "null" : "не null")}");
+
+            Console.WriteLine("\n========= ИСКЛЮЧЕНИЯ: =========");
+            Console.WriteLine("--- Не хватает маны: ---");
+            Console.WriteLine("используем навык мага несколько раз");
+            try
             {
-                Console.WriteLine("\n========= МАССИВ ИЗ ОБЪЕКТОВ РАЗНЫХ НАСЛЕДНИКОВ: =========");
-                Console.WriteLine("Создаём массив указателей из объектов разных наследников");
-
-                CharacterList characters = new CharacterList
+                for (int i = 0; i < 2; i++)
                 {
-                    new Warrior("Воин", 150, sword, 10),
-                    new Mage("Маг", 120, staff1, 100),
-                    new Priest("Жрец", 100, staff2, 75),
-                    new Rogue("Разбойник", 110, dagger, 5)
-                };
-
-                Console.WriteLine("\nАТАКИ:");
-                characters[0].Attack(characters[1]);
-                characters[1].Attack(characters[0]);
-                characters[2].Attack(characters[3]);
-                characters[3].Attack(characters[2]);
-
-                Console.WriteLine("\nНАВЫКИ:");
-                characters[0].UseSkill(characters[1]);
-                characters[1].UseSkill(characters[0]);
-                characters[2].UseSkill(characters[2]);
-                characters[3].UseSkill(characters[2]);
-
-                Console.WriteLine("\nПРОПУСК ХОДА:");
-                foreach (var hero in characters)
-                {
-                    hero.SkipTurn();
+                    mage.UseSkill(warrior);
                 }
+            }
+            catch (NotEnoughMana error)
+            {
+                Console.WriteLine($"Перехвачено: {error.Message}, ход пропущен");
+                mage.SkipTurn();
+            }
 
-                Console.WriteLine("\nОПИСАНИЕ:");
-                foreach (var hero in characters)
+            Console.WriteLine("--- Не хватает выносливости: ---");
+            var dummy = new Mage("Болванчик", 1000, staff1, 100);
+            try
+            {
+                for (int i = 0; i < 6; i++)
                 {
-                    Console.WriteLine(hero.Describe() + "\n");
+                    warrior.UseSkill(dummy);
                 }
-
-                BattleLog.PrintBattleLog();
             }
-
-
-            Console.WriteLine("\n========= УНИЧТОЖЕНИЕ НАСЛЕДНИКА ЧЕРЕЗ УКАЗАТЕЛЬ НА БАЗОВЫЙ КЛАСС: =========");
-            Console.WriteLine("Создаём персонажа через переменную базового класса во вложенном блоке");
+            catch(NotEnoughStamina error)
             {
-                BaseCharacter character = new Priest("Жрец1", 100, staff2, 75);
-                Console.WriteLine("Выходим из вложенного блока");
+                Console.WriteLine($"Перехвачено: {error.Message}, ход пропущен");
+                warrior.SkipTurn();
             }
 
-
-            Console.WriteLine("\n========= ПОВЕРХНОСТНОЕ И ГЛУБОКОЕ КОПИРОВАНИЕ: =========");
-            Console.WriteLine("ПОВЕРХНОСТНАЯ КОПИЯ:");
-            var sharedSword = new Weapon("Общий меч", 15, DamageType.Physical, 100, 0.2, 2.5);
-            Console.WriteLine($"Создано общее оружие. Прочность: {sharedSword.Durability}");
-            var fighter1 = new Warrior("Поверхностный1", 120, sharedSword, 20);
-            Console.WriteLine("Создаём поверхностную копию");
-            Warrior fighter2 = fighter1.ShallowCopy();
-
-            Console.WriteLine($"Прочность оружия у 1 до использования: {fighter1.Weapon.Durability}");
-            Console.WriteLine($"Прочность оружия у 2 до использования: {fighter2.Weapon.Durability}");
-
-            Console.WriteLine("Используем оружие через одного из владельцев");
-            fighter1.Weapon.Use();
-
-            Console.WriteLine($"Прочность оружия у 1 после использования: {fighter1.Weapon.Durability}");
-            Console.WriteLine($"Прочность оружия у 2 после использования: {fighter2.Weapon.Durability}");
-
-            Console.WriteLine("\nГЛУБОКАЯ КОПИЯ:");
-            var original = new Warrior("Оригинал", 120, sharedSword, 20);
-            var copy = (Warrior)original.Clone();
-            Console.WriteLine($"Прочность у оружия оригинала до использования: {original.Weapon.Durability}");
-            Console.WriteLine($"Прочность у оружия копии до использования: {copy.Weapon.Durability}");
-
-            Console.WriteLine("Используем оружие через одного из владельцев");
-            original.Weapon.Use();
-
-            Console.WriteLine($"Прочность у оригинала после использования: {original.Weapon.Durability}");
-            Console.WriteLine($"Прочность у копии после использования: {copy.Weapon.Durability}");
-
-
-            Console.WriteLine("\n========= РАБОТА СО СТРОКАМИ: =========");
-            Console.WriteLine("КОНКАТЕНАЦИЯ:");
-            string firstName = "Спардудл";
-            string lastName = "Дребезжалка";
-            string fullName = firstName + " " + lastName;
-            Console.WriteLine($"Полное имя: {fullName}");
-
-            Console.WriteLine("\nПОИСК:");
-            int pos = fullName.IndexOf("Дребезжалка");
-            if (pos >= 0)
+            Console.WriteLine("--- Недопустимые параметры констуктора: ---");
+            try
             {
-                string alias = fullName.Substring(pos);
-                Console.WriteLine($"Найдено прозвище: {alias}");
+                Console.WriteLine("Попытка создать воина с maxHealth = -10:");
+                var bad = new Warrior("Плохой", -10, sword, 5);
             }
-            else
+            catch(InvalidCharacterParameter error)
             {
-                Console.WriteLine("Ничего не найдено");
+                Console.WriteLine($"Не удалось создать персонажа: {error.Message}");
             }
 
-            Console.WriteLine("\nСРАВНЕНИЕ:");
-            int isSame = string.Compare(lastName, "Дребезжалка");
-            Console.WriteLine($"Результат сравнения: {(isSame == 0 ? "равно" : "не равно")}");
+            try
+            {
+                Console.WriteLine("Попытка создать мага с maxMana = 0:");
+                var badMage = new Mage("ПлохойМаг", 100, staff1, 0);
+            }
+            catch(InvalidCharacterParameter error)
+            {
+                Console.WriteLine($"Не удалось создать персонажа: {error.Message}");
+            }
 
+            Console.WriteLine("--- Действие мёртвого персонажа: ---");
+            var newMage = new Mage("Новый Маг", 100, staff1, 35);
+            try
+            {
+                while(warrior.IsAlive())
+                {
+                    warrior.TakeDamage(1000);
+                }
+                Console.WriteLine("Воин мёртв, пытаемся заставить его атаковать:");
+                warrior.Attack(newMage);
+            }
+            catch(CharacterIsDead error)
+            {
+                Console.WriteLine($"Перехвачено: {error.Message}");
+            }
 
-            Console.WriteLine("\n========= СРАВНЕНИЕ ПО СОДЕРЖИМОМУ: =========");
-            var a = new Warrior("Тестер", 100, new Weapon("Меч", 15, DamageType.Physical, 100, 0.2, 2.5), 0);
-            var b = new Warrior("Тестер", 100, new Weapon("Меч", 15, DamageType.Physical, 100, 0.2, 2.5), 0);
-            Console.WriteLine($"ReferenceEquals: {ReferenceEquals(a, b)}");
-            Console.WriteLine($"Equals: {a.Equals(b)}");
-            Console.WriteLine($"HashCode совпадает: {a.GetHashCode() == b.GetHashCode()}");
+            Console.WriteLine("--- Попытка атаковать мёртвого персонажа: ---");
+            try
+            {
+                Console.WriteLine("Пытаемся заставить мага атаковать мёртвого воина:");
+                newMage.Attack(warrior);
+            }
+            catch(CharacterIsDead error)
+            {
+                Console.WriteLine($"Перехвачено: {error.Message}");
+            }
 
+            Console.WriteLine("\n========= КОНФИГУРИРОВАНИЕ: =========");
+            Console.WriteLine("--- Random vs random: ---");
+            var warrior2 = new Warrior("Воин2", 100, sword, 10);
+            var mage2 = new Mage("Маг2", 80, staff1, 65);
 
-            Console.WriteLine("\n========= СТАТИЧЕСКОЕ ПОЛЕ: =========");
-            Console.WriteLine($"Количество созданных персонажей: {BaseCharacter.GetCount()}");
-        }
+            var battle = new Battle(warrior2, mage2, new RandomActionChooser(), new RandomActionChooser());
+            for (int i = 0; i < 15 && !battle.IsFinished(); i++)
+            {
+                battle.PerformTurn();
+            }
+            battle.PrintWinner();
+
+            Console.WriteLine("--- Console vs console: ---");
+            var warrior3 = new Warrior("Воин3", 150, sword, 10);
+            var mage3 = new Mage("Маг3", 100, staff1, 65);
+            var battle2 = new Battle(warrior3, mage3, new RandomActionChooser(), new RandomActionChooser());
+
+            Console.WriteLine("Первый ход случайный");
+            battle2.PerformTurn();
+
+            Console.WriteLine("Меняем рандомный выбор действия на консольный ввод");
+            battle2.SetChoosers(new ConsoleActionChooser(), new ConsoleActionChooser());
+
+            Console.WriteLine("Второй ход с выбором действия через консоль");
+            battle2.PerformTurn();
+
+            Console.WriteLine("\n========= ICOMPARABLE: =========");
+            Console.WriteLine("Создаём список персонажей");
+            var team = new List<BaseCharacter>
+            {
+                new Warrior("Дагбранд", 100, sword, 5),
+                new Mage("Грамрвальд", 80, staff1, 30),
+                new Priest("Сэларимирена", 90, staff2, 20),
+                new Rogue("Глеб", 85, dagger, 3),
+            };
+            Console.WriteLine("Сортируем список персонажей по именам");
+            team.Sort();
+            foreach (var hero in team) 
+            {   
+                Console.WriteLine($" {hero.Name}");
+            }
+        }   
     }
 }

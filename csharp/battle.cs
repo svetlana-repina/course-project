@@ -7,16 +7,24 @@ namespace RpgBattleSystem
         private BaseCharacter _fighter1;
         private BaseCharacter _fighter2;
         private int _turnCount;
+        private IActionChooser _chooser1;
+        private IActionChooser _chooser2;
 
         public Battle()
         {
             _fighter1 = null;
             _fighter2 = null;
             _turnCount = 0;
+            _chooser1 = new ConsoleActionChooser();
+            _chooser2 = new ConsoleActionChooser();
             Console.WriteLine("Создан пустой бой");
         }
 
         public Battle(BaseCharacter f1, BaseCharacter f2)
+            : this(f1, f2, new ConsoleActionChooser(), new ConsoleActionChooser())
+        {}
+
+        public Battle(BaseCharacter f1, BaseCharacter f2, IActionChooser c1, IActionChooser c2)
         {
             if (f1 == null || f2 == null)
             {
@@ -24,12 +32,28 @@ namespace RpgBattleSystem
                 _fighter1 = null;
                 _fighter2 = null;
                 _turnCount = 0;
+                _chooser1 = new ConsoleActionChooser();
+                _chooser2 = new ConsoleActionChooser();
                 return;
             }
             _fighter1 = f1;
             _fighter2 = f2;
             _turnCount = 0;
+            _chooser1 = c1;
+            _chooser2 = c2;
             Console.WriteLine($"Начался бой между {f1.Name} и {f2.Name}");
+        }
+
+        public void SetChoosers(IActionChooser c1, IActionChooser c2)
+        {
+            if (c1 != null)
+            {
+                _chooser1 = c1;
+            }
+            if (c2 != null)
+            {
+                _chooser2 = c2;
+            }
         }
 
         public BaseCharacter GetWinner()
@@ -74,13 +98,34 @@ namespace RpgBattleSystem
             }
             _turnCount++;
             Console.WriteLine($"-------- Ход {_turnCount} --------");
-            if (_turnCount % 2 != 0)
+
+            BaseCharacter actor = (_turnCount % 2 == 1) ? _fighter1 : _fighter2;
+            BaseCharacter target = (_turnCount % 2 == 1) ? _fighter2 : _fighter1;
+            IActionChooser chooser = (_turnCount % 2 == 1) ? _chooser1 : _chooser2;
+            ActionType action = chooser.ChooseAction(actor);
+
+            try
             {
-                _fighter1.Attack(_fighter2);
+                switch(action)
+                {
+                    case ActionType.Attack: actor.Attack(target); break;
+                    case ActionType.Skill: actor.UseSkill(target); break;
+                    case ActionType.Skip: actor.SkipTurn(); break;
+                }
             }
-            else
+            catch (NotEnoughMana error)
             {
-                _fighter2.Attack(_fighter1);
+                Console.WriteLine($"Перехвачено: {error.Message}, ход пропущен");
+                actor.SkipTurn();
+            }
+            catch (NotEnoughStamina error)
+            {
+                Console.WriteLine($"Перехвачено: {error.Message}, ход пропущен");
+                actor.SkipTurn();
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine($"Ошибка: {error.Message}");
             }
         }
 

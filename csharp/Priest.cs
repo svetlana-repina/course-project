@@ -3,7 +3,7 @@ using static System.Math;
 
 namespace RpgBattleSystem
 {
-    public sealed class Priest : BaseCharacter
+    public sealed class Priest : BaseCharacter, IManaUser
     {
         private const int ManaAttackCost = 5;
         private const int ManaSkillCost = 15;
@@ -16,8 +16,7 @@ namespace RpgBattleSystem
         {
             if (maxMana <= 0)
             {
-                Console.WriteLine("Ошибка! Мана должна быть >0. Установлено значение 10.");
-                maxMana = 10;
+                throw new InvalidCharacterParameter("maxMana", maxMana);
             }
             Mana = maxMana;
             MaxMana = maxMana;
@@ -38,19 +37,15 @@ namespace RpgBattleSystem
         {
             if (!IsAlive())
             {
-                Console.WriteLine($"{Name} мёртв и не может атаковать");
-                return 0;
+                throw new CharacterIsDead(Name);
             }
             if (!target.IsAlive())
             {
-                Console.WriteLine($"{target.Name} уже мёртв");
-                return 0;
+                throw new CharacterIsDead(target.Name);
             }
             if (Mana < ManaAttackCost)
             {
-                Console.WriteLine($"{Name} не хватает маны для атаки");
-                SkipTurn();
-                return 0;
+                throw new NotEnoughMana(Name, ManaAttackCost, Mana);
             }
 
             Mana -= ManaAttackCost;
@@ -79,14 +74,11 @@ namespace RpgBattleSystem
         {
             if (!IsAlive())
             {
-                Console.WriteLine($"{Name} мёртв и не может атаковать");
-                return;
+                throw new CharacterIsDead(Name);
             }
             if (Mana < ManaSkillCost)
             {
-                Console.WriteLine($"{Name} не хватает маны для использования навыка");
-                SkipTurn();
-                return;
+                throw new NotEnoughMana(Name, ManaSkillCost, Mana);
             }
 
             Mana -= ManaSkillCost;
@@ -113,5 +105,20 @@ namespace RpgBattleSystem
                 $"Критический урон:       x{GetTotalCrit()}\n" +
                 $"Шанс критического удара: {GetTotalCritChance():F2}%\n" +
                 $"Мана:                    {Mana}/{MaxMana}\n";
+
+        public bool SpendMana(int amount)
+        {
+            if (amount < 0 || Mana < amount) return false;
+            Mana -= amount;
+            return true;
+        }
+
+        public void RestoreMana(int amount)
+        {
+            if (amount > 0)
+            {
+                Mana = Min(Mana + amount, MaxMana);
+            }
+        }
     }
 }
